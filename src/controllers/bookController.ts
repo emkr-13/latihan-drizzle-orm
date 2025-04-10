@@ -48,7 +48,7 @@ export const getBookById = async (
   res: Response
 ): Promise<void> => {
   try {
-    const bookId = parseInt(req.params.id || req.body.bookId);
+     const bookId = parseInt(req.params.id || req.body.bookId);
 
     if (isNaN(bookId)) {
       res.status(400).json({ error: "Invalid book ID" });
