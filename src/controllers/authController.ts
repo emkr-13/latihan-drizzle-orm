@@ -67,47 +67,81 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { username, password } = req.body;
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.username, username));
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // Validasi input
+      const { username, password } = req.body;
+  
+      if (!username || !password) {
+        res.status(400).json({ error: 'Username and password are required' });
+      }
+  
+      // Cari user berdasarkan username
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+  
+      // Jika user tidak ditemukan
+      if (!user) {
+        res.status(401).json({ error: 'Invalid credentials' });
+      }
+  
+      // Verifikasi password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        res.status(401).json({ error: 'Invalid credentials' });
+        return;
+      }
+  
+      // Generate token
+      let authToken: string, refreshToken: string | undefined;
+      try {
+        authToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, {
+          expiresIn: parseInt(process.env.AUTH_TOKEN_EXP!),
+        });
 
-    if (!user[0] || !(await bcrypt.compare(password, user[0].password))) {
-      res.status(401).json({ error: "Invalid credentials" });
-      return;
-    }
+        refreshToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, {
+          expiresIn: parseInt(process.env.REFRESH_TOKEN_EXP!),
+        });
 
-    const authToken = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET!, {
-      expiresIn: parseInt(process.env.AUTH_TOKEN_EXP!),
-    });
+        if (!refreshToken) {
+          throw new Error('Refresh token generation failed');
+        }
+      } catch (jwtError) {
+        console.error('JWT generation failed:', jwtError);
+        res.status(500).json({ error: 'Token generation failed' });
+        return;
+      }
 
-    const refreshToken = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET!, {
-      expiresIn: parseInt(process.env.REFRESH_TOKEN_EXP!),
-    });
-
-    await db
-      .update(users)
-      .set({
+      // Update refresh token di database
+      try {
+        await db
+          .update(users)
+          .set({
+            refreshToken,
+            refreshTokenExp: new Date(Date.now() + parseInt(process.env.REFRESH_TOKEN_EXP!) * 1000),
+          })
+          .where(eq(users.id, user.id));
+      } catch (dbError) {
+        console.error('Database update failed:', dbError);
+        res.status(500).json({ error: 'Failed to update refresh token' });
+        return;
+      }
+  
+      // Kirim respons sukses
+      res.status(200).json({
+        message: 'Login successful',
+        authToken,
         refreshToken,
-        refreshTokenExp: new Date(
-          Date.now() + parseInt(process.env.REFRESH_TOKEN_EXP!) * 1000
-        ),
-      })
-      .where(eq(users.id, user[0].id));
+      });
+    } catch (error) {
+      console.error('Unexpected error during login:', error);
+      res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+  };
 
-    res
-      .status(200)
-      .json({ message: "login successfully", authToken, refreshToken });
-  } catch (error) {
-    res.status(500).json({ error: "Login failed" });
-  }
-};
+
 function async(
   req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
   res: Response<any, Record<string, any>>,
