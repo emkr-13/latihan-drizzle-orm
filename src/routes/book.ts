@@ -14,15 +14,15 @@ const router = Router();
 router.get('/books', getAllBooks);
 
 // Protected route: Create a new book
-router.post('/books', authenticate, createBook);
+router.post('/books/create', authenticate, createBook);
 
 // Public route: Get a single book by ID
-router.get('/books/:id', getBookById);
+router.get('/books/detail', getBookById);
 
 // Protected route: Update a book
-router.put('/books/:id', authenticate, updateBook);
+router.post('/books/update', authenticate, updateBook);
 
 // Protected route: Delete a book
-router.delete('/books/:id', authenticate, deleteBook);
+router.post('/books/delete', authenticate, deleteBook);
 
 export default router;
