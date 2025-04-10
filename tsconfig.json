@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", // Target versi ECMAScript (modern)
+    "module": "CommonJS", // Modul sistem untuk Node.js
+    "strict": true, // Aktifkan mode ketat TypeScript
+    "esModuleInterop": true, // Mengaktifkan interoperabilitas antara CommonJS dan ES Modules
+    "skipLibCheck": true, // Lewati pengecekan tipe pada file `.d.ts`
+    "forceConsistentCasingInFileNames": true, // Pastikan konsistensi casing nama file
+    "outDir": "./dist", // Direktori output untuk file JavaScript hasil kompilasi
+    "rootDir": "./src", // Direktori root untuk source code TypeScript
+    "moduleResolution": "Node", // Resolusi modul menggunakan Node.js
+    "baseUrl": "./src", // Basis URL untuk impor relatif
+    "paths": {
+      "@config/*": ["config/*"],
+      "@models/*": ["models/*"],
+      "@routes/*": ["routes/*"],
+      "@controllers/*": ["controllers/*"],
+      "@middleware/*": ["middleware/*"],
+      "@seeders/*": ["seeders/*"]
+    }, // Memudahkan alias impor
+    "experimentalDecorators": true, // Mendukung decorator eksperimental
+    "emitDecoratorMetadata": true // Emit metadata untuk decorator
+  },
+  "include": ["src/**/*"], // Sertakan semua file dalam direktori `src`
+  "exclude": ["node_modules", "dist"] // Kecualikan direktori `node_modules` dan `dist`
+}
